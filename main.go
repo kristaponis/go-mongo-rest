@@ -22,7 +22,7 @@ type person struct {
 
 var client *mongo.Client
 
-// getPersonHandler gets all items in the collection
+// getPersonHandler gets all persons in the collection
 // /person GET
 func getPersonHandler(w http.ResponseWriter, r *http.Request) {
 	w.Header().Add("Content-Type", "application/json")
@@ -47,7 +47,7 @@ func getPersonHandler(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(persons)
 }
 
-// createPersonHandler creates new item in the collection
+// createPersonHandler creates new person in the collection
 // /person POST
 func createPersonHandler(w http.ResponseWriter, r *http.Request) {
 	w.Header().Add("Content-Type", "application/json")
@@ -59,7 +59,7 @@ func createPersonHandler(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(result)
 }
 
-// getOnePersonHandler gets one items in collection by id
+// getOnePersonHandler gets person in collection by id
 // /person/{id} GET
 func getOnePersonHandler(w http.ResponseWriter, r *http.Request) {
 	w.Header().Add("Content-Type", "application/json")
@@ -76,6 +76,8 @@ func getOnePersonHandler(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(p)
 }
 
+// deleteOnePersonHandler deletes person in collection by id
+// /person/{id} DELETE
 func deleteOnePersonHandler(w http.ResponseWriter, r *http.Request) {
 	w.Header().Add("Content-Type", "application/json")
 	params := mux.Vars(r)
