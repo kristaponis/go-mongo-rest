@@ -76,6 +76,20 @@ func getOnePersonHandler(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(p)
 }
 
+func deleteOnePersonHandler(w http.ResponseWriter, r *http.Request) {
+	w.Header().Add("Content-Type", "application/json")
+	params := mux.Vars(r)
+	id, _ := primitive.ObjectIDFromHex(params["id"])
+	coll := client.Database("personsdb").Collection("people")
+	ctx, _ := context.WithTimeout(context.Background(), 5*time.Second)
+	result, err := coll.DeleteOne(ctx, person{ID: id})
+	if err != nil {
+		http.Error(w, `{"message":"`+err.Error()+`"}`, http.StatusInternalServerError)
+		return
+	}
+	json.NewEncoder(w).Encode(result)
+}
+
 func main() {
 	ctx, _ := context.WithTimeout(context.Background(), 5*time.Second)
 	opts := options.Client().ApplyURI("mongodb://localhost:27017")
@@ -85,6 +99,7 @@ func main() {
 	router.HandleFunc("/person", getPersonHandler).Methods(http.MethodGet)
 	router.HandleFunc("/person", createPersonHandler).Methods(http.MethodPost)
 	router.HandleFunc("/person/{id}", getOnePersonHandler).Methods(http.MethodGet)
+	router.HandleFunc("/person/{id}", deleteOnePersonHandler).Methods(http.MethodDelete)
 
 	log.Println("Starting application...")
 	log.Fatal(http.ListenAndServe(":8080", router))
