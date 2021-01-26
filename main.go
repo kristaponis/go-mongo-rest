@@ -59,7 +59,7 @@ func createPersonHandler(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(result)
 }
 
-// getOnePersonHandler gets person in collection by id
+// getOnePersonHandler gets person in the collection by id
 // /person/{id} GET
 func getOnePersonHandler(w http.ResponseWriter, r *http.Request) {
 	w.Header().Add("Content-Type", "application/json")
@@ -74,6 +74,28 @@ func getOnePersonHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	json.NewEncoder(w).Encode(p)
+}
+
+// updateOnePersonHandler updates person in the collection by id
+// /person/{id} PATCH
+func updateOnePersonHandler(w http.ResponseWriter, r *http.Request) {
+	w.Header().Add("Content-Type", "application/json")
+	var p person
+	params := mux.Vars(r)
+	id, _ := primitive.ObjectIDFromHex(params["id"])
+	json.NewDecoder(r.Body).Decode(&p)
+	coll := client.Database("personsdb").Collection("people")
+	ctx, _ := context.WithTimeout(context.Background(), 5*time.Second)
+	result, err := coll.UpdateOne(ctx, bson.D{{Key: "_id", Value: id}}, bson.D{
+		{Key: "$set", Value: bson.D{
+			{Key: "firstname", Value: p.Firstname},
+		}},
+	})
+	if err != nil {
+		http.Error(w, `{"message":"`+err.Error()+`"}`, http.StatusInternalServerError)
+		return
+	}
+	json.NewEncoder(w).Encode(result)
 }
 
 // deleteOnePersonHandler deletes person in collection by id
@@ -101,6 +123,7 @@ func main() {
 	router.HandleFunc("/person", getPersonHandler).Methods(http.MethodGet)
 	router.HandleFunc("/person", createPersonHandler).Methods(http.MethodPost)
 	router.HandleFunc("/person/{id}", getOnePersonHandler).Methods(http.MethodGet)
+	router.HandleFunc("/person/{id}", updateOnePersonHandler).Methods(http.MethodPatch)
 	router.HandleFunc("/person/{id}", deleteOnePersonHandler).Methods(http.MethodDelete)
 
 	log.Println("Starting application...")
