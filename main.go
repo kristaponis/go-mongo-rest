@@ -59,6 +59,23 @@ func createPersonHandler(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(result)
 }
 
+// getOnePersonHandler gets one items in collection by id
+// /person/{id} GET
+func getOnePersonHandler(w http.ResponseWriter, r *http.Request) {
+	w.Header().Add("Content-Type", "application/json")
+	params := mux.Vars(r)
+	id, _ := primitive.ObjectIDFromHex(params["id"])
+	var p person
+	coll := client.Database("personsdb").Collection("people")
+	ctx, _ := context.WithTimeout(context.Background(), 5*time.Second)
+	err := coll.FindOne(ctx, person{ID: id}).Decode(&p)
+	if err != nil {
+		http.Error(w, `{"message":"`+err.Error()+`"}`, http.StatusInternalServerError)
+		return
+	}
+	json.NewEncoder(w).Encode(p)
+}
+
 func main() {
 	ctx, _ := context.WithTimeout(context.Background(), 5*time.Second)
 	opts := options.Client().ApplyURI("mongodb://localhost:27017")
@@ -67,6 +84,7 @@ func main() {
 	router := mux.NewRouter()
 	router.HandleFunc("/person", getPersonHandler).Methods(http.MethodGet)
 	router.HandleFunc("/person", createPersonHandler).Methods(http.MethodPost)
+	router.HandleFunc("/person/{id}", getOnePersonHandler).Methods(http.MethodGet)
 
 	log.Println("Starting application...")
 	log.Fatal(http.ListenAndServe(":8080", router))
